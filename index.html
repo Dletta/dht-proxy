@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Gun Test</title>
+  </head>
+  <script src="https://cdn.jsdelivr.net/gh/amark/gun/gun.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/amark/gun/lib/promise.js"></script>
+  <body>
+    A gun walks into a bar and the barman says "What Protocol do you speak?"
+    "Any."
+
+    Send some data via gun
+    <br>
+    <button onclick="window.glo.get('trystero-test').get('hallo').put(Math.random()*100)">Send</button>
+    <p id="output">Data from them</p>
+  </body>
+
+  <script type="module">
+
+  /* Module selection
+      Given that we want protocols to be added like modules, we need to structure
+      our websocket proxy in a way that allows handlers to be used.
+
+      The proxy will initiate gun for you, feel free to modify it after (make it available)
+      but to be able to overwrite the sending Mechanism and Receiving Mechanism
+      our module needs to overwrite functions at the wire level. (it's a result of how
+      gun initiates the websocket)
+
+      Trystero is the only supported module at this time, we are aiming at adding
+      peerjs and hyperDHT
+  */
+
+  /*
+    Initiate Trystero Functions
+  */
+
+    import {joinRoom} from 'https://cdn.skypack.dev/trystero'
+    const config = {appId: 'gun_dht'}
+    const room = joinRoom(config, 'test123')
+    room.onPeerJoin(id => console.log(`${id} joined`))
+    room.onPeerLeave(id => console.log(`${id} left`))
+    //room.leave()
+    const [sendMsg, onMsg] = room.makeAction('chat')
+    onMsg(console.log)
+
+  /*
+   Peer JS Module
+   */
+
+
+  /*
+  Create a Websocket Proxy class
+  */
+
+  var self;
+
+  class WebSocketProxy {
+    constructor(url) {
+      self = this
+      this.url = '' //this would be the hash, I guess or is replaced with whatever var is needed
+      this.CONNECTING = 0
+      this.OPEN = 1
+      this.CLOSING = 2
+      this.CLOSED = 3
+      this.readyState = 1
+      this.bufferedAmount = 0
+      this.onopen = function () {}
+      this.onerror = function () {}
+      this.onclose = function () {}
+      this.extensions = ''
+      this.protocol = ''
+      this.close = {code:'4', reason:'Closed'}
+      this.onmessage = function (){}
+      this.binaryType = ''
+      this.send = function(data) {
+        sendMsg(data)
+      }
+    }
+
+    setSender(func) {
+      console.log('setting new function on send');
+      self.send = sendMsg
+    }
+
+    callMessage(msg){
+      console.log(' "receiving" ', msg, self);
+      self.onmessage(msg)
+    }
+  }
+
+
+  var gun = Gun({peers:["ws:trystero"], WebSocket:WebSocketProxy})
+
+  //enumerate peers
+  function wireUp(){
+    var peers = gun._.opt.peers
+
+    for (var peer in peers) {
+      console.log(peer, peers[peer], peers[peer].wire);
+      peers[peer].wire.setSender(function(msg) {
+        sendMsg(msg)
+      })
+      onMsg(peers[peer].wire.callMessage)
+    }
+
+    gun.get('trystero-test').get('hallo').put(Math.random()*100)
+
+    gun.get('trystero-test').get('hallo').on((val, key)=>{
+      console.log('OTHER PEER key: ' +key +"; val: " + val)
+      var out = document.getElementById('output')
+      out.innerText = 'key: ' +key +"; val: " + val + ";"
+    })
+  }
+
+  setTimeout(wireUp, 500)
+
+  window.glo = gun
+  window.send = sendMsg
+  window.on = onMsg
+  /* What happens today vs 2019? */
+  /* dam.bye closes the connection, but does not remove the peer
+     from the list, but at least we can just pass the socket reference */
+  </script>
+</html>
