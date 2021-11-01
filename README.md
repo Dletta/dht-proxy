@@ -13,10 +13,10 @@ The main goal is a decentralized DHT / Discovery mechanisms. Gone are the days o
 
 Sorry to disappoint, but it actually works.
 
--[X] Trystero Gun DHT App with Room (Mesh)
--[ ] Trystero Add configurable Mesh Name
--[ ] PeerJs Gun DHT integration
--[ ] HyperDHT integration
+- [X] Trystero Gun DHT App with Room (Mesh)
+- [ ] Trystero Add configurable Mesh Name
+- [ ] PeerJs Gun DHT integration
+- [ ] HyperDHT integration
 
 Connecting across these technologies, we no longer need to worry about 'finding' or having 'access to' gun peer urls. 
 
