@@ -6,6 +6,8 @@
   </head>
   <script src="https://cdn.jsdelivr.net/gh/amark/gun/gun.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/amark/gun/lib/promise.js"></script>
+  <script src="" type="module"></script>
+  <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
   <body>
     A gun walks into a bar and the barman says "What Protocol do you speak?"
     "Any."
@@ -15,6 +17,18 @@
     <button onclick="window.glo.get('trystero-test').get('hallo').put(Math.random()*100)">Send</button>
     <p id="output">Data from them</p>
   </body>
+
+  <script>
+    const configuration = {
+      trystero_enabled: true,
+      trystero_app_id: "gun_dht",
+      trystero_mesh_id: "graph-universal-node",
+      peerjs_enabled: true,
+      peerjs_mesh_id: "graph-universal-node",
+      hyperdht_enabled: false,
+      hyperdht_hash: "graph-universal-node" // add hashing function here
+    }
+  </script>
 
   <script type="module">
 
@@ -30,93 +44,67 @@
       Trystero is the only supported module at this time, we are aiming at adding
       peerjs and hyperDHT
   */
+  import {WebsocketProxy} from "https://cdn.jsdelivr.net/gh/dletta/dht-proxy/websocketproxy.jsm"
 
   /*
     Initiate Trystero Functions
   */
+  import {joinRoom} from 'https://cdn.skypack.dev/trystero'
 
-    import {joinRoom} from 'https://cdn.skypack.dev/trystero'
-    const config = {appId: 'gun_dht'}
-    const room = joinRoom(config, 'test123')
+  if(configuration.trystero_enabled) {
+    const config = {appId: configuration.trystero_app_id}
+    const room = joinRoom(config, configuration.trystero_mesh_id)
     room.onPeerJoin(id => console.log(`${id} joined`))
     room.onPeerLeave(id => console.log(`${id} left`))
     //room.leave()
     const [sendMsg, onMsg] = room.makeAction('chat')
     onMsg(console.log)
+  }
+
 
   /*
    Peer JS Module
    */
+   if(configuration.peerjs_enabled){
+    console.log(Peer)
+    var peer = new Peer()
 
+    var connection = peer.connect(configuration.peerjs_mesh_id)
+
+    connection.on('open', function(){
+      console.log('Peer JS connected');
+    });
+
+    peer.on('connection', function(conn) {
+      connection.on('data', function(data){
+        // Will print 'hi!'
+        console.log(data)
+        proxyHandler(data)
+      });
+    });
+   }
+
+   /*
+   Hyper DHT Module
+   */
+  if(configuration.hyperdht_enabled){
+    console.log('hyper still needs implementation');
+  }
 
   /*
   Create a Websocket Proxy class
   */
 
-  var self;
 
-  class WebSocketProxy {
-    constructor(url) {
-      self = this
-      this.url = '' //this would be the hash, I guess or is replaced with whatever var is needed
-      this.CONNECTING = 0
-      this.OPEN = 1
-      this.CLOSING = 2
-      this.CLOSED = 3
-      this.readyState = 1
-      this.bufferedAmount = 0
-      this.onopen = function () {}
-      this.onerror = function () {}
-      this.onclose = function () {}
-      this.extensions = ''
-      this.protocol = ''
-      this.close = {code:'4', reason:'Closed'}
-      this.onmessage = function (){}
-      this.binaryType = ''
-      this.send = function(data) {
-        sendMsg(data)
-      }
-    }
-
-    setSender(func) {
-      console.log('setting new function on send');
-      self.send = sendMsg
-    }
-
-    callMessage(msg){
-      console.log(' "receiving" ', msg, self);
-      self.onmessage(msg)
-    }
-  }
 
 
   var gun = Gun({peers:["ws:trystero"], WebSocket:WebSocketProxy})
 
-  //enumerate peers
-  function wireUp(){
-    var peers = gun._.opt.peers
 
-    for (var peer in peers) {
-      console.log(peer, peers[peer], peers[peer].wire);
-      peers[peer].wire.setSender(function(msg) {
-        sendMsg(msg)
-      })
-      onMsg(peers[peer].wire.callMessage)
-    }
-
-    gun.get('trystero-test').get('hallo').put(Math.random()*100)
-
-    gun.get('trystero-test').get('hallo').on((val, key)=>{
-      console.log('OTHER PEER key: ' +key +"; val: " + val)
-      var out = document.getElementById('output')
-      out.innerText = 'key: ' +key +"; val: " + val + ";"
-    })
-  }
 
   setTimeout(wireUp, 500)
 
   window.glo = gun
-  window.send = sendMsg
   window.on = onMsg
   /* What happens today vs 2019? */
   /* dam.bye closes the connection, but does not remove the peer
