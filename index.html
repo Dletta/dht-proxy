@@ -2,112 +2,63 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
-    <title>Gun Test</title>
+    <title>Gun DHT - Example use</title>
   </head>
-  <script src="https://cdn.jsdelivr.net/gh/amark/gun/gun.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/amark/gun/lib/promise.js"></script>
-  <script src="" type="module"></script>
-  <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
   <body>
     A gun walks into a bar and the barman says "What Protocol do you speak?"
-    "Any."
+    The gun answers: "Any."
 
     Send some data via gun
     <br>
-    <button onclick="window.glo.get('trystero-test').get('hallo').put(Math.random()*100)">Send</button>
+    <button onclick="window.gun.get('meshed_data').get('randomNumber').put(Math.random()*100)">Send</button>
     <p id="output">Data from them</p>
   </body>
-
-  <script>
-    const configuration = {
-      trystero_enabled: true,
-      trystero_app_id: "gun_dht",
-      trystero_mesh_id: "graph-universal-node",
-      peerjs_enabled: true,
-      peerjs_mesh_id: "graph-universal-node",
-      hyperdht_enabled: false,
-      hyperdht_hash: "graph-universal-node" // add hashing function here
-    }
-  </script>
-
+  <!-- Needed modules -->
+  <script src="https://cdn.jsdelivr.net/gh/amark/gun/gun.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/amark/gun/lib/promise.js"></script>
+  <script src="./websocketproxy.js"></script>
+  <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
+  <!-- Initiate Gun and the module-->
   <script type="module">
-
-  /* Module selection
-      Given that we want protocols to be added like modules, we need to structure
-      our websocket proxy in a way that allows handlers to be used.
-
-      The proxy will initiate gun for you, feel free to modify it after (make it available)
-      but to be able to overwrite the sending Mechanism and Receiving Mechanism
-      our module needs to overwrite functions at the wire level. (it's a result of how
-      gun initiates the websocket)
-
-      Trystero is the only supported module at this time, we are aiming at adding
-      peerjs and hyperDHT
-  */
-  import {WebsocketProxy} from "https://cdn.jsdelivr.net/gh/dletta/dht-proxy/websocketproxy"
-
-  /*
-    Initiate Trystero Functions
-  */
+  // import for trystero module
   import {joinRoom} from 'https://cdn.skypack.dev/trystero'
 
-  if(configuration.trystero_enabled) {
-    const config = {appId: configuration.trystero_app_id}
-    const room = joinRoom(config, configuration.trystero_mesh_id)
-    room.onPeerJoin(id => console.log(`${id} joined`))
-    room.onPeerLeave(id => console.log(`${id} left`))
-    //room.leave()
-    const [sendMsg, onMsg] = room.makeAction('chat')
-    onMsg(console.log)
-  }
+  // configure which protocols are wanted to be used
+  // the mesh_id identifies which mesh to join
+  const configuration = {
+    trystero_enabled: false,
+    trystero_app_id: "gun_dht",
+    trystero_mesh_id: "graph-universal-node",
+    peerjs_enabled: true,
+    peerjs_mesh_id: "graph-universal-node",
+    hyperdht_enabled: false,
+    hyperdht_hash: "graph-universal-node" // add hashing function here
+  };
+  // instantiate module
+  var proxy = new GunProxy()
+  // configure websocket
+  var WebSocketProxy = proxy.initialize(configuration, joinRoom)
+
+  // pass websocket as custom websocket to gun instance
+  // make sure localStorage / indexedDB is on
+  var gun = Gun({peers:["proxy:websocket"], WebSocket:WebSocketProxy})
+
+  setTimeout(() => {
+    proxy.attachGun(gun)
+      // We set some initial value here
+      // Put your application logic here
+    gun.get('meshed_data').get('randomNumber').put(Math.random()*100)
 
 
-  /*
-   Peer JS Module
-   */
-   if(configuration.peerjs_enabled){
-    console.log(Peer)
-    var peer = new Peer()
-
-    var connection = peer.connect(configuration.peerjs_mesh_id)
-
-    connection.on('open', function(){
-      console.log('Peer JS connected');
-    });
-
-    peer.on('connection', function(conn) {
-      connection.on('data', function(data){
-        // Will print 'hi!'
-        console.log(data)
-        proxyHandler(data)
-      });
-    });
-   }
-
-   /*
-   Hyper DHT Module
-   */
-  if(configuration.hyperdht_enabled){
-    console.log('hyper still needs implementation');
-  }
-
-  /*
-  Create a Websocket Proxy class
-  */
+    gun.get('meshed_data').get('randomNumber').on((val, key)=>{
+      console.log('Value updated key: ' +key +"; val: " + val)
+      var out = document.getElementById('output')
+      out.innerText = 'key: ' +key +"; val: " + val + ";"
+    })
+  }, 1000)
 
 
-
-
-  var gun = Gun({peers:["ws:trystero"], WebSocket:WebSocketProxy})
-
-
-
-  setTimeout(wireUp, 500)
-
-  window.glo = gun
-  window.on = onMsg
-  /* What happens today vs 2019? */
-  /* dam.bye closes the connection, but does not remove the peer
-     from the list, but at least we can just pass the socket reference */
+  window.gun = gun
+  window.proxy = proxy
   </script>
 </html>
