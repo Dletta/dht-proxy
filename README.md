@@ -18,7 +18,11 @@ Sorry to disappoint, but it actually works.
 - [ ] PeerJs Gun DHT integration
 - [ ] HyperDHT integration
 
+
 Connecting across these technologies, we no longer need to worry about 'finding' or having 'access to' gun peer urls. 
+
+![ezgif com-gif-maker (26)](https://user-images.githubusercontent.com/1423657/139880482-e07b8ac3-ec8d-45da-a35a-5c76af862090.gif)
+
 
 > A gun walks into a bar and the barman asks: "Which protocol do you speak?" The gun answers: "Any."
 
