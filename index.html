@@ -16,7 +16,7 @@
   <!-- Needed modules -->
   <script src="https://cdn.jsdelivr.net/gh/amark/gun/gun.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/amark/gun/lib/promise.js"></script>
-  <script src="./websocketproxy.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/dletta/dht-proxy/websocketproxy.js"></script>
   <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
   <!-- Initiate Gun and the module-->
   <script type="module">
@@ -26,10 +26,10 @@
   // configure which protocols are wanted to be used
   // the mesh_id identifies which mesh to join
   const configuration = {
-    trystero_enabled: false,
+    trystero_enabled: true,
     trystero_app_id: "gun_dht",
     trystero_mesh_id: "graph-universal-node",
-    peerjs_enabled: true,
+    peerjs_enabled: false,
     peerjs_mesh_id: "graph-universal-node",
     hyperdht_enabled: false,
     hyperdht_hash: "graph-universal-node" // add hashing function here
