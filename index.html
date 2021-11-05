@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>Gun DHT - Example use</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/dletta/dht-proxy/chat.css">
   </head>
   <body>
     A gun walks into a bar and the barman says "What Protocol do you speak?"
@@ -10,8 +11,32 @@
 
     Send some data via gun
     <br>
-    <button onclick="window.gun.get('meshed_data').get('randomNumber').put(Math.random()*100)">Send</button>
-    <p id="output">Data from them</p>
+    <div class="container">
+      <div class="main-view">
+        <div class="identity">
+          You are <span id="username-span">...</span>
+        </div>
+        <div class="chat-feed">
+
+        </div>
+      </div>
+      <div class="user-list">
+        <div class="user-list-title">
+          Users
+        </div>
+        <div class="user-list-list">
+
+        </div>
+      </div>
+      <div class="editor">
+        <div class="text">
+          <input id="text-input" name="" value="">
+        </div>
+        <div class="button">
+          <button type="button" id="send-button">Send</button>
+        </div>
+      </div>
+    </div>
   </body>
   <!-- Needed modules -->
   <script src="https://cdn.jsdelivr.net/gh/amark/gun/gun.js"></script>
@@ -22,6 +47,8 @@
   <script type="module">
   // import for trystero module
   import {joinRoom} from 'https://cdn.skypack.dev/trystero'
+
+  const debug = true
 
   // configure which protocols are wanted to be used
   // the mesh_id identifies which mesh to join
@@ -45,20 +72,107 @@
 
   setTimeout(() => {
     proxy.attachGun(gun)
-      // We set some initial value here
-      // Put your application logic here
-    gun.get('meshed_data').get('randomNumber').put(Math.random()*100)
+    var username = 'Anon#'
+    var focused = true
 
+    window.addEventListener('blur', function () { focused = false; });
+    window.addEventListener('focus', function () { focused = true; });
 
-    gun.get('meshed_data').get('randomNumber').on((val, key)=>{
-      console.log('Value updated key: ' +key +"; val: " + val)
-      var out = document.getElementById('output')
-      out.innerText = 'key: ' +key +"; val: " + val + ";"
-    })
-  }, 1000)
+    console.log('Chat init');
+    let promise = Notification.requestPermission();
+    var input = window.prompt('Please enter a username: ', 'Anon_' + Math.random().toString(36).substring(7))
+    if(input) {
+      username = input;
+    }
 
+    const uuid = Math.random().toString(36).substring(7)
 
-  window.gun = gun
-  window.proxy = proxy
+    document.getElementById('username-span').textContent = username;
+    gun.get('chat')
+       .get('how_many_people_have-visited')
+       .get(uuid)
+       .put({
+         name: username,
+         time: Date.now(),
+       })
+
+  }, 700)
+
+  window.addEventListener('unload', function(event) {
+    gun.get('chat')
+       .get('how_many_people_have-visited')
+       .get(uuid)
+       .put({
+         name: username,
+         leaveTime: Date.now(),
+       })
+  });
+
+  document.getElementById('send-button').onclick = function() {
+    if(document.getElementById('text-input')){
+      var input = document.getElementById('text-input');
+      var text = input.value;
+      input.value = '';
+      var msg = {
+        chat: true,
+        username : username,
+        message : text
+      }
+      var randomKey = Math.random().toString(36).substring(7)
+      gun.get('chat').get('gun_room').get(randomKey).put(msg)
+      createChatMessage(msg);
+    }
+  }
+
+  document.getElementById('text-input').onkeyup = function(ev) {
+    if(ev.code == 'Enter'){
+      var input = ev.target;
+      var text = input.value;
+      input.value = '';
+      var msg = {
+        chat: true,
+        username : username,
+        message : text
+      }
+      var randomKey = Math.random().toString(36).substring(7)
+      gun.get('chat').get('gun_room').get(randomKey).put(msg)
+      createChatMessage(msg);
+    }
+  }
+
+  /* Response function */
+
+  gun.get('chat').get('gun_room').map().on(function(val, key) {
+    console.log(val)
+    createChatMessage(val)
+  })
+
+  /* Helper functions */
+
+  function createChatMessage (msg) {
+    let chatM = document.createElement('div');
+    chatM.setAttribute('class', 'chatM');
+    let user = chatM.appendChild(document.createElement('span'));
+    user.setAttribute('style', 'font-weight:bold')
+    user.appendChild(document.createTextNode(' ' + msg.username + ' '));
+    let date = chatM.appendChild(document.createElement('span'));
+    date.setAttribute('style', 'font-weight:bold;font-size: 10px;font-variant-position: super;color: grey;')
+    date.appendChild(document.createTextNode((new Date()).toLocaleString()));
+    chatM.appendChild(document.createElement('br'));
+    let message = chatM.appendChild(document.createElement('span'));
+    message.textContent = '  ' + msg.message;
+    document.getElementsByClassName('chat-feed')[0].appendChild(chatM);
+    if(!focused){spawnNotification(msg.username+'::'+msg.message, 'Chat over DHT');}
+  }
+
+  function spawnNotification(text, title) {
+    var options = {
+        body: text,
+    }
+    var n = new Notification(title,options);
+  }
+
+  if(debug)window.gun = gun
+  if(debug)window.proxy = proxy
   </script>
 </html>

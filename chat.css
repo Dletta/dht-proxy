@@ -1,0 +1,70 @@
+.container {
+  display: grid;
+  grid-template-columns: 80% 20%;
+  column-gap: 2px;
+  row-gap: 2px;
+}
+
+.main-view {
+  border: 2px double black;
+  min-height: 400px;
+}
+
+.identity {
+  color: white;
+  background-color: rgba( 0, 30, 255, .3);
+  font-weight: bold;
+}
+
+.chat-feed {
+  display: flex;
+  flex-direction: column;
+  max-height: 600px;
+  overflow-y: scroll;
+}
+
+.editor {
+  display: grid;
+  grid-template-columns: 70% 30%;
+  column-gap: 2px;
+  row-gap: 2px;
+}
+
+.text {
+}
+
+#text-input {
+  min-width: 99.8%;
+  min-height: 100%;
+  padding: 0px;
+  margin:0px;
+  border: 1px solid black;
+}
+
+
+.button {
+}
+
+#send-button {
+  min-width: 99%;
+  min-height: 102%;
+  padding: 5px;
+  border: 1px solid black;
+}
+
+.user-list {
+
+}
+
+.user-list-title {
+  font-weight: 900;
+}
+
+.user-list-list {
+  font-size: 12px;
+}
+
+.chatM {
+  padding-left: 10px;
+  padding-top: 4px;
+}
