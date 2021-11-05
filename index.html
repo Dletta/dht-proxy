@@ -49,7 +49,9 @@
   import {joinRoom} from 'https://cdn.skypack.dev/trystero'
 
   const debug = true
-
+  var username = 'Anon#'
+  var focused = true
+  var uuid = ''
   // configure which protocols are wanted to be used
   // the mesh_id identifies which mesh to join
   const configuration = {
@@ -72,8 +74,6 @@
 
   setTimeout(() => {
     proxy.attachGun(gun)
-    var username = 'Anon#'
-    var focused = true
 
     window.addEventListener('blur', function () { focused = false; });
     window.addEventListener('focus', function () { focused = true; });
@@ -85,7 +85,7 @@
       username = input;
     }
 
-    const uuid = Math.random().toString(36).substring(7)
+    uuid = Math.random().toString(36).substring(7)
 
     document.getElementById('username-span').textContent = username;
     gun.get('chat')
@@ -96,12 +96,19 @@
          time: Date.now(),
        })
 
+    gun.get('chat').get('gun_room').map().once(function(val, key) {
+       console.log(val)
+       if(val.username != username) {
+         createChatMessage(val)
+       }
+    })
+
   }, 700)
 
-  window.addEventListener('unload', function(event) {
+  window.addEventListener('beforeunload', function(event) {
     gun.get('chat')
        .get('how_many_people_have-visited')
-       .get(uuid)
+       .get(uuid + "bye")
        .put({
          name: username,
          leaveTime: Date.now(),
@@ -144,7 +151,9 @@
 
   gun.get('chat').get('gun_room').map().on(function(val, key) {
     console.log(val)
-    createChatMessage(val)
+    if(val.username != username) {
+      createChatMessage(val)
+    }
   })
 
   /* Helper functions */
