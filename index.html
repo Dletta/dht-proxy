@@ -149,11 +149,16 @@
 
   /* Response function */
 
+  var last = {};
+
   gun.get('chat').get('gun_room').map().on(function(val, key) {
-    console.log(val)
-    if(val.username != username) {
+    //console.log(val)
+    if(last.username != val.username && last.message != val.message && val.username != username){
       createChatMessage(val)
+    } else {
+      console.log('deduplicated on call', val);
     }
+    last = val
   })
 
   /* Helper functions */
@@ -172,6 +177,7 @@
     message.textContent = '  ' + msg.message;
     document.getElementsByClassName('chat-feed')[0].appendChild(chatM);
     if(!focused){spawnNotification(msg.username+'::'+msg.message, 'Chat over DHT');}
+    document.getElementsByClassName('chat-feed')[0].lastChild.scrollIntoView()
   }
 
   function spawnNotification(text, title) {
