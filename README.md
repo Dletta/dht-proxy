@@ -1,6 +1,8 @@
 # dht-proxy
 A proxy to bridge discovery over DHTs of all kinds for the Gun Protocol
 
+TRY IT OUT HERE: https://dletta.github.io/dht-proxy/
+
 ## How it works
 
 Gun uses websockets to communicate with other nodes. Overwriting the websocket, we can add any transport we want using the facade pattern.
